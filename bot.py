@@ -41,8 +41,25 @@ class AnonBot(commands.Bot):
     def __init__(self, cache, texts):
         self.cache = cache
         self.texts = texts
-        self.initialized = not self.cache.load('saved_config.json').is_none()
+        self.initialized = self.load_config(cache)
         super().__init__(description=description, command_prefix='?')
+
+    def load_config(self, cache):
+        saved_config = cache.load('saved_config.json')
+        if saved_config.is_none():
+            self.anon_role = saved_config['anon_role']
+            self.header = saved_config['header']
+            return True
+        else:
+            return False
+
+    def save_config(self):
+        saved_config = {
+            "header": self.header,
+            "anon_role": self.anon_role,
+        }
+        self.cache.save('saved_config.json', saved_config)
+
 
     def is_command(self, cmd, s):
         return s.strip().split(' ')[0] == f"{self.command_prefix}{cmd}"
@@ -85,6 +102,8 @@ class AnonBot(commands.Bot):
                 await say('ask_role')
         header = await ask('ask_header')
         self.header = header.content
+
+        self.save_config()
         await say('init_complete')
         self.initialized = True
 
