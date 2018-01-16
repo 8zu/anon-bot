@@ -1,0 +1,6 @@
+ask_role = 'Specify a role eligible to post anonymously.'
+ask_header = 'Specify a header'
+init_complete = 'initialization complete!'
+
+# Error
+uninitialized = 'Bot is not initialized!'

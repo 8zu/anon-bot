@@ -2,11 +2,15 @@ import asyncio
 import logging
 import os.path as osp
 import sys
+import re
+
+import pytoml
 
 from cache import Cache
 
 try:
     from discord.ext import commands
+    from discord import utils
     import discord
 except ImportError:
     print("Discord.py is not installed.\n"
@@ -21,6 +25,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger = logging.getLogger('ccbot')
 logger.addHandler(handler)
 
+config_path = './config.toml'
 description = """A bot to allow simple anonymous posting. Use at own risk!"""
 
 def get_config(path):
@@ -30,31 +35,45 @@ def get_config(path):
         logger.error("Missing config file! Shutting down now...")
         sys.exit(1)
 
-    if 'token' not in config or not config['token']:
-        logger.error("Token is not filled in! Shutting down now...")
-        sys.exit(1)
-
     return config
 
 class AnonBot(commands.Bot):
-    def __init__(self, cache):
+    def __init__(self, cache, texts):
         self.cache = cache
+        self.texts = texts
         self.initialized = not self.cache.load('saved_config.json').is_none()
         super().__init__(description=description, command_prefix='?')
 
     def is_command(self, cmd, s):
         return s.strip().split(' ')[0] == f"{self.command_prefix}{cmd}"
 
-    async def initialize(self, channel, author):
-        await self.send_message(channel, texts['ask_role'])
-        role_user = await self.wait_for_message(author=author, channel=channel)
-        print(role_user.content) # DEBUG
-        await self.send_message(channel, texts['ask_header'])
-        header = await self.wait_for_message(author=author, channel=channel)
-        print(header.content) # DEBUG
+    def find_role(self, name_or_id):
+        roles = self.server.role_hierarchy
+        if name_or_id.startswith('<@&'):
+            role_id = name_or_id[3:-1]
+            return utils.find(lambda r: r.id == role_id, roles)
+        else:
+            return utils.find(lambda r: r.name == name_or_id, roles)
 
-        # DEBUG
-        # self.initialized = True
+    async def initialize(self, channel, author):
+        async def say(msg_id):
+            await self.send_message(channel, self.texts[msg_id])
+        async def ask(prompt):
+            await say(prompt)
+            return await self.wait_for_message(author=author, channel=channel)
+
+        self.server = channel.server
+        while True:
+            role = await ask('ask_role')
+            self.role = self.find_role(role.content)
+            if self.role:
+                break
+            else:
+                await say('ask_role')
+        header = await ask('ask_header')
+        self.header = header.content
+        await say('init_complete')
+        self.initialized = True
 
     async def forward(self, msg):
         raise NotImplemenntedError()
@@ -62,8 +81,8 @@ class AnonBot(commands.Bot):
 
 def initialize(config):
     cache = Cache(config['cache_root'])
-    bot = AnonBot(cache)
-    texts = get_config(config['texts_path'])
+    texts = get_config(config['text_path'])
+    bot = AnonBot(cache, texts)
 
     @bot.event
     async def on_ready():
@@ -78,7 +97,7 @@ def initialize(config):
                 await bot.send_message(msg.channel, texts['uninitialized'])
             return
 
-        if bot.is_command("initialize", msg.content):
+        if bot.is_command("init", msg.content):
             await bot.initialize(msg.channel, msg.author)
 
 
@@ -87,5 +106,8 @@ def initialize(config):
 
 if __name__ == '__main__':
     config = get_config(config_path)
+    if 'token' not in config or not config['token']:
+        logger.error("Token is not filled in! Shutting down now...")
+        sys.exit(1)
     border_bot = initialize(config)
     border_bot.run(config['token'])
