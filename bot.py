@@ -39,15 +39,15 @@ def get_config(path):
 
 class AnonBot(commands.Bot):
     def __init__(self, cache, texts):
+        super().__init__(description=description, command_prefix='?')
         self.cache = cache
         self.texts = texts
-        self.initialized = self.load_config(cache)
-        super().__init__(description=description, command_prefix='?')
 
     def load_config(self, cache):
-        saved_config = cache.load('saved_config.json')
-        if saved_config.is_none():
-            self.anon_role = saved_config['anon_role']
+        saved_config = cache.load('saved_config.json').val
+        if saved_config:
+            self.server = self.get_server(saved_config['server'])
+            self.anon_role = self.find_role(saved_config['anon_role'])
             self.header = saved_config['header']
             return True
         else:
@@ -55,8 +55,9 @@ class AnonBot(commands.Bot):
 
     def save_config(self):
         saved_config = {
+            "server": self.server.id,
             "header": self.header,
-            "anon_role": self.anon_role,
+            "anon_role": self.anon_role.name,
         }
         self.cache.save('saved_config.json', saved_config)
 
@@ -90,13 +91,14 @@ class AnonBot(commands.Bot):
         if self.initialized:
             res = await ask_yes_no('overwrite_init')
             if res.content.lower() in ['n', 'no']:
+                await say('overwrite_aborted')
                 return
 
         self.server = channel.server
         while True:
             role = await ask('ask_role')
-            self.role = self.find_role(role.content)
-            if self.role:
+            self.anon_role = self.find_role(role.content)
+            if self.anon_role:
                 break
             else:
                 await say('ask_role')
@@ -119,6 +121,7 @@ def initialize(config):
     @bot.event
     async def on_ready():
         print("hi")
+        bot.initialized = bot.load_config(cache)
 
     @bot.event
     async def on_message(msg):
