@@ -82,8 +82,9 @@ class AnonBot(commands.Bot):
             return utils.find(lambda r: r.name == name_or_id, roles)
 
     def find_channel(self, name_or_id):
-        if name_or_id.startswith('<@&'):
-            ch_id = name_or_id[3:-1]
+        print(name_or_id)
+        if name_or_id.startswith('<#'):
+            ch_id = name_or_id[2:-1]
             return self.get_channel(ch_id)
         else:
             return utils.find(lambda ch: ch.name == name_or_id, self.get_all_channels())
@@ -115,8 +116,8 @@ class AnonBot(commands.Bot):
             else:
                 await say('invalid_role')
         while True:
-            channel = await ask('ask_channel')
-            self.channel = self.find_channel(channel.content)
+            ch_msg = await ask('ask_channel')
+            self.channel = self.find_channel(ch_msg.content)
             if self.channel:
                 break
             else:
