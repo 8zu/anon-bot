@@ -109,8 +109,11 @@ class AnonBot(commands.Bot):
         await say('init_complete')
         self.initialized = True
 
+    def check_eligible(self, mem):
+        return self.anon_role in mem.roles
+
     async def forward(self, msg):
-        raise NotImplemenntedError()
+        print("forwarding!!")
 
 
 def initialize(config):
@@ -125,11 +128,16 @@ def initialize(config):
 
     @bot.event
     async def on_message(msg):
+        async def say(msg_id):
+            await self.send_message(msg.channel, msg_id)
+
         if msg.channel.is_private:
-            if bot.initialized:
-                await bot.forward(msg.content)
+            if not bot.initialized:
+                await say(self.texts['uninitialized'])
+            elif not bot.check_eligible(msg.author):
+                await say(self.texts['ineligible'].format(role=self.anon_role))
             else:
-                await bot.send_message(msg.channel, texts['uninitialized'])
+                await bot.forward(msg.content)
             return
 
         if bot.like_command("init", msg.content):

@@ -2,7 +2,8 @@ ask_role = 'Specify a role eligible to post anonymously.'
 ask_header = 'Specify a header'
 init_complete = 'initialization complete!'
 overwrite_init = 'This bot is already initialized, are you sure? (y/n)'
-overwrite_aborted = 'Aborted'
+overwrite_aborted = 'Aborted's
 
 # Error
 uninitialized = 'Bot is not initialized!'
+ineligible = "Sorry, you don't belong to the eligible class {role}"
