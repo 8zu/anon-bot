@@ -47,6 +47,9 @@ class AnonBot(commands.Bot):
     def is_command(self, cmd, s):
         return s.strip().split(' ')[0] == f"{self.command_prefix}{cmd}"
 
+    def like_command(self, cmd, s):
+        return s.strip().split(' ')[0].startswith(f"{self.command_prefix}{cmd}")
+
     def find_role(self, name_or_id):
         roles = self.server.role_hierarchy
         if name_or_id.startswith('<@&'):
@@ -61,6 +64,16 @@ class AnonBot(commands.Bot):
         async def ask(prompt):
             await say(prompt)
             return await self.wait_for_message(author=author, channel=channel)
+        def is_yes_no(msg):
+            return msg.content.lower() in ['y', 'n', 'yes', 'no']
+        async def ask_yes_no(prompt):
+            await say(prompt)
+            return await self.wait_for_message(author=author, channel=channel, check=is_yes_no)
+
+        if self.initialized:
+            res = await ask_yes_no('overwrite_init')
+            if res.content.lower() in ['n', 'no']:
+                return
 
         self.server = channel.server
         while True:
@@ -97,9 +110,8 @@ def initialize(config):
                 await bot.send_message(msg.channel, texts['uninitialized'])
             return
 
-        if bot.is_command("init", msg.content):
+        if bot.like_command("init", msg.content):
             await bot.initialize(msg.channel, msg.author)
-
 
     return bot
 

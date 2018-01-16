@@ -1,6 +1,7 @@
 ask_role = 'Specify a role eligible to post anonymously.'
 ask_header = 'Specify a header'
 init_complete = 'initialization complete!'
+overwrite_init = 'This bot is already initialized, are you sure? (y/n)'
 
 # Error
 uninitialized = 'Bot is not initialized!'
