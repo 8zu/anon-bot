@@ -34,7 +34,7 @@ Make sure you have the corresponding authorization. You just need to DM the bot.
    ```
    in any channel and the bot should guide you through the initialization process
 
-###<a name="header"></a> Header syntax
+### <a name="header"></a> Header syntax
 
 The header supports simple substitution syntax through string interpolation
 
