@@ -43,6 +43,9 @@ class AnonBot(commands.Bot):
         self.cache = cache
         self.texts = texts
 
+    def is_me(self, author):
+        return author == self.user
+
     def load_config(self, cache):
         saved_config = cache.load('saved_config.json').val
         if saved_config:
@@ -109,7 +112,10 @@ class AnonBot(commands.Bot):
         await say('init_complete')
         self.initialized = True
 
-    def check_eligible(self, mem):
+    def check_eligible(self, user):
+        mem = utils.find(lambda m: m.id == user.id, self.get_all_members())
+        if not mem:
+            return False
         return self.anon_role in mem.roles
 
     async def forward(self, msg):
@@ -128,14 +134,17 @@ def initialize(config):
 
     @bot.event
     async def on_message(msg):
+        if bot.is_me(msg.author):
+            return
+
         async def say(msg_id):
-            await self.send_message(msg.channel, msg_id)
+            await bot.send_message(msg.channel, msg_id)
 
         if msg.channel.is_private:
             if not bot.initialized:
-                await say(self.texts['uninitialized'])
+                await say(texts['uninitialized'])
             elif not bot.check_eligible(msg.author):
-                await say(self.texts['ineligible'].format(role=self.anon_role))
+                await say(texts['ineligible'].format(role=bot.anon_role))
             else:
                 await bot.forward(msg.content)
             return
