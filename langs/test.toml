@@ -1,4 +1,5 @@
 ask_role = 'Specify a role eligible to post anonymously.'
+ask_channel = 'Specify a channel to post anonymously in'
 ask_header = 'Specify a header'
 init_complete = 'initialization complete!'
 overwrite_init = 'This bot is already initialized, are you sure? (y/n)'
@@ -7,3 +8,5 @@ overwrite_aborted = 'Aborted'
 # Error
 uninitialized = 'Bot is not initialized!'
 ineligible = "Sorry, you don't belong to the eligible class \"{role}\""
+invalid_role = 'This role is invalid or cannot be found'
+invalid_channel = 'This channel cannot be found'

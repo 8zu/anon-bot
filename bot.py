@@ -51,6 +51,7 @@ class AnonBot(commands.Bot):
         if saved_config:
             self.server = self.get_server(saved_config['server'])
             self.anon_role = self.find_role(saved_config['anon_role'])
+            self.channel = self.find_channel(saved_config['channel'])
             self.header = saved_config['header']
             return True
         else:
@@ -60,6 +61,7 @@ class AnonBot(commands.Bot):
         saved_config = {
             "server": self.server.id,
             "header": self.header,
+            "channel": self.channel.name,
             "anon_role": self.anon_role.name,
         }
         self.cache.save('saved_config.json', saved_config)
@@ -78,6 +80,13 @@ class AnonBot(commands.Bot):
             return utils.find(lambda r: r.id == role_id, roles)
         else:
             return utils.find(lambda r: r.name == name_or_id, roles)
+
+    def find_channel(self, name_or_id):
+        if name_or_id.startswith('<@&'):
+            ch_id = name_or_id[3:-1]
+            return self.get_channel(ch_id)
+        else:
+            return utils.find(lambda ch: ch.name == name_or_id, self.get_all_channels())
 
     async def initialize(self, channel, author):
         async def say(msg_id):
@@ -104,7 +113,14 @@ class AnonBot(commands.Bot):
             if self.anon_role:
                 break
             else:
-                await say('ask_role')
+                await say('invalid_role')
+        while True:
+            channel = await ask('ask_channel')
+            self.channel = self.find_channel(channel.content)
+            if self.channel:
+                break
+            else:
+                await say('invalid_channel')
         header = await ask('ask_header')
         self.header = header.content
 
