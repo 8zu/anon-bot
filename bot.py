@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os.path as osp
 import sys
-import re
+import random
 
 import pytoml
 
@@ -38,6 +38,8 @@ def get_config(path):
     return config
 
 class AnonBot(commands.Bot):
+    rule = '__' + (' ' * 150) + '__'
+
     def __init__(self, cache, texts):
         super().__init__(description=description, command_prefix='?')
         self.cache = cache
@@ -53,6 +55,7 @@ class AnonBot(commands.Bot):
             self.anon_role = self.find_role(saved_config['anon_role'])
             self.channel = self.find_channel(saved_config['channel'])
             self.header = saved_config['header']
+            self.counter = 0
             return True
         else:
             return False
@@ -82,7 +85,6 @@ class AnonBot(commands.Bot):
             return utils.find(lambda r: r.name == name_or_id, roles)
 
     def find_channel(self, name_or_id):
-        print(name_or_id)
         if name_or_id.startswith('<#'):
             ch_id = name_or_id[2:-1]
             return self.get_channel(ch_id)
@@ -135,8 +137,20 @@ class AnonBot(commands.Bot):
             return False
         return self.anon_role in mem.roles
 
+    def decorated_header(self):
+        return '\n'.join(['```css', self.header.format(counter=f'{self.counter:04}', id=random.randint(10000, 99999)), '```'])
+
     async def forward(self, msg):
-        print("forwarding!!")
+        self.counter += 1
+        frame = '\n'.join([self.decorated_header(), msg])
+        await self.send_message(self.channel, frame)
+
+    async def set_counter(self, channel, msg):
+        try:
+            cnt = int(msg.split(' ')[1])
+        except ValueError:
+            await self.send_message(channel, self.texts['counter_parse_error'])
+        self.counter = cnt
 
 
 def initialize(config):
@@ -168,6 +182,8 @@ def initialize(config):
 
         if bot.like_command("init", msg.content):
             await bot.initialize(msg.channel, msg.author)
+        elif bot.is_command('set_counter', msg.content):
+            await bot.set_counter(msg.channel, msg.content)
 
     return bot
 

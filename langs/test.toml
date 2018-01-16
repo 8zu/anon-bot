@@ -10,3 +10,4 @@ uninitialized = 'Bot is not initialized!'
 ineligible = "Sorry, you don't belong to the eligible class \"{role}\""
 invalid_role = 'This role is invalid or cannot be found'
 invalid_channel = 'This channel cannot be found'
+counter_parse_error = 'Cannot parse value'
