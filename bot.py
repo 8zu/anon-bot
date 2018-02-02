@@ -48,6 +48,10 @@ class AnonBot(commands.Bot):
     def is_me(self, author):
         return author == self.user
 
+    def is_owner(self, author):
+        """ is server is not set then just return true. Otherwise author must be the server owner """
+        return not self.server or author == self.server.owner
+
     def load_config(self, cache):
         saved_config = cache.load('saved_config.json').val
         if saved_config:
@@ -94,6 +98,10 @@ class AnonBot(commands.Bot):
     async def initialize(self, channel, author):
         async def say(msg_id):
             await self.send_message(channel, self.texts[msg_id])
+
+        if not self.is_owner(author):
+            await say('not_owner')
+
         async def ask(prompt):
             await say(prompt)
             return await self.wait_for_message(author=author, channel=channel)
@@ -145,7 +153,9 @@ class AnonBot(commands.Bot):
         frame = '\n'.join([self.decorated_header(), msg])
         await self.send_message(self.channel, frame)
 
-    async def set_counter(self, channel, msg):
+    async def set_counter(self, channel, author, msg):
+        if not self.is_owner(author):
+            await say('not_owner')
         try:
             cnt = int(msg.split(' ')[1])
         except ValueError:
@@ -183,7 +193,7 @@ def initialize(config):
         if bot.like_command("init", msg.content):
             await bot.initialize(msg.channel, msg.author)
         elif bot.is_command('set_counter', msg.content):
-            await bot.set_counter(msg.channel, msg.content)
+            await bot.set_counter(msg.channel, msg.author, msg.content)
 
     return bot
 

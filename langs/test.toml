@@ -7,6 +7,7 @@ overwrite_aborted = 'Aborted'
 
 # Error
 uninitialized = 'Bot is not initialized!'
+not_owner = "Sorry, this command can only be executed by the server owner."
 ineligible = "Sorry, you don't belong to the eligible class \"{role}\""
 invalid_role = 'This role is invalid or cannot be found'
 invalid_channel = 'This channel cannot be found'
